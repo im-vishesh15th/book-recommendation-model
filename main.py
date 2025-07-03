@@ -48,19 +48,39 @@ except Exception as e:
 class BookInfo(BaseModel):
     title: str
     image_url: str
+    year: Optional[str] = None
+    publisher: Optional[str] = None
+    author: Optional[str] = None
+    rating: Optional[float] = None
+    confidence: Optional[float] = None
 
 class RecommendationResponse(BaseModel):
     searched_book: BookInfo
     recommendations: List[BookInfo]
 
 # Helper function to fetch book poster URL
-def fetch_poster(book_title):
+def fetch_book_details(book_title):
     try:
-        book_idx = np.where(final_rating['title'] == book_title)[0][0]
-        return final_rating.iloc[book_idx]['image_url']
-    except:
-        # Return a default image if book poster not found
-        return "https://via.placeholder.com/150x225?text=No+Image+Available"
+        book_data = final_rating[final_rating['title'] == book_title].iloc[0]
+        print("YOOOOOOO"+str(book_data))
+        return {
+            "title": book_title,
+            "image_url": book_data['image_url'],
+            "year": str(book_data['year']),
+            "publisher": book_data['publisher'],
+            "author": book_data['author'],
+            "rating": float(book_data['avg_rating'])
+        }
+    except Exception as e:
+        print(f"Error fetching details for {book_title}: {e}")
+        return {
+            "title": book_title,
+            "image_url": "https://via.placeholder.com/150x225?text=No+Image+Available",
+            "year": None,
+            "publisher": None,
+            "author": None,
+            "rating": None
+        }
 
 # Recommendation function
 def recommend_books(book_name, num_recommendations=5):
@@ -73,21 +93,30 @@ def recommend_books(book_name, num_recommendations=5):
             book_pivot.iloc[book_id, :].values.reshape(1, -1), 
             n_neighbors=num_recommendations+1  # +1 because the book itself will be included
         )
+        print(suggestion)
         
         # Get the recommended book titles
         recommended_books = []
-        for i in range(len(suggestion)):
-            books = book_pivot.index[suggestion[i]]
-            for j in books:
-                if j != book_name:  # Exclude the searched book
-                    poster_url = fetch_poster(j)
-                    recommended_books.append({"title": j, "image_url": poster_url})
+        similarities = 1 - distance.flatten()  # Convert cosine distance to similarity
+        # Normalize similarities (excluding the input book itself)
+        normalized_similarities = similarities[1:] / similarities[1:].sum()
+       
+        for i in range(1, len(suggestion[0])):
+            book_index = suggestion[0][i]
+            book_title = book_pivot.index[book_index]
+
+            if book_title != book_name:
+                book_details = fetch_book_details(book_title)
+               
+                book_details['confidence'] = round(float(normalized_similarities[i - 1]), 4)
         
-        # Get the searched book's poster
-        searched_book_poster = fetch_poster(book_name)
+            recommended_books.append(book_details)
+        
+        # Get the searched book's details
+        searched_book_details = fetch_book_details(book_name)
         
         return {
-            "searched_book": {"title": book_name, "image_url": searched_book_poster},
+            "searched_book": searched_book_details,
             "recommendations": recommended_books
         }
     except Exception as e:
