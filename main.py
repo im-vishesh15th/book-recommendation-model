@@ -1,0 +1,136 @@
+import pickle
+import numpy as np
+from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+import uvicorn
+from typing import List, Optional
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+# Create FastAPI app
+app = FastAPI(title="Book Recommendation System", description="API for book recommendations using collaborative filtering")
+
+
+
+
+origins = [ 
+    "http://localhost:3000",
+    "http://localhost",
+   
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+# Load model and data
+try:
+    model = pickle.load(open('artifacts/model.pkl', 'rb'))
+    book_names = pickle.load(open('artifacts/book_names.pkl', 'rb'))
+    final_rating = pickle.load(open('artifacts/final_rating.pkl', 'rb'))
+    book_pivot = pickle.load(open('artifacts/book_pivot.pkl', 'rb'))
+    model_loaded = True
+except Exception as e:
+    print(f"Warning: Error loading model or data: {e}")
+    print("API will run in limited mode without recommendation functionality.")
+    model_loaded = False
+    # Create empty placeholders for the model and data
+    model = None
+    book_names = []
+    final_rating = None
+    book_pivot = None
+
+# Define response models
+class BookInfo(BaseModel):
+    title: str
+    image_url: str
+
+class RecommendationResponse(BaseModel):
+    searched_book: BookInfo
+    recommendations: List[BookInfo]
+
+# Helper function to fetch book poster URL
+def fetch_poster(book_title):
+    try:
+        book_idx = np.where(final_rating['title'] == book_title)[0][0]
+        return final_rating.iloc[book_idx]['image_url']
+    except:
+        # Return a default image if book poster not found
+        return "https://via.placeholder.com/150x225?text=No+Image+Available"
+
+# Recommendation function
+def recommend_books(book_name, num_recommendations=5):
+    try:
+        # Find the index of the book in the pivot table
+        book_id = np.where(book_pivot.index == book_name)[0][0]
+        
+        # Get recommendations using the model
+        distance, suggestion = model.kneighbors(
+            book_pivot.iloc[book_id, :].values.reshape(1, -1), 
+            n_neighbors=num_recommendations+1  # +1 because the book itself will be included
+        )
+        
+        # Get the recommended book titles
+        recommended_books = []
+        for i in range(len(suggestion)):
+            books = book_pivot.index[suggestion[i]]
+            for j in books:
+                if j != book_name:  # Exclude the searched book
+                    poster_url = fetch_poster(j)
+                    recommended_books.append({"title": j, "image_url": poster_url})
+        
+        # Get the searched book's poster
+        searched_book_poster = fetch_poster(book_name)
+        
+        return {
+            "searched_book": {"title": book_name, "image_url": searched_book_poster},
+            "recommendations": recommended_books
+        }
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Error generating recommendations: {str(e)}")
+
+# API endpoints
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    return "<html><body><h1>Book Recommendation API</h1><p>Visit <a href='/docs'>/docs</a> for API documentation</p></body></html>"
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint to verify service status"""
+    return {
+        "status": "ok",
+        "model_loaded": model_loaded,
+        "service_capabilities": {
+            "recommendations": model_loaded,
+            "book_list": model_loaded
+        }
+    }
+
+@app.get("/books", response_model=List[str])
+async def get_all_books():
+    """Get a list of all available books"""
+    if not model_loaded:
+        raise HTTPException(status_code=503, detail="Book recommendation service is currently unavailable. Please try again later.")
+    return list(book_names)
+
+@app.get("/recommend/{book_name}", response_model=RecommendationResponse)
+async def get_recommendation(book_name: str, num_recommendations: Optional[int] = 5):
+    """Get book recommendations based on a book name"""
+    if not model_loaded:
+        raise HTTPException(status_code=503, detail="Book recommendation service is currently unavailable. Please try again later.")
+    
+    if book_name not in book_names:
+        raise HTTPException(status_code=404, detail=f"Book '{book_name}' not found")
+    
+    if num_recommendations < 1 or num_recommendations > 20:
+        raise HTTPException(status_code=400, detail="Number of recommendations must be between 1 and 20")
+    
+    return recommend_books(book_name, num_recommendations)
+
+# Run the application
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

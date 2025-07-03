@@ -1,0 +1,11 @@
+### dependency
+fastapi
+uvicorn
+numpy
+matplotlib
+seaborn
+pandas 
+jupyter
+scikit-learn
+python-multipart
+rapidfuzz
