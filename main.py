@@ -17,6 +17,9 @@ app = FastAPI(title="Book Recommendation System", description="API for book reco
 origins = [ 
     "http://localhost:3000",
     "http://localhost",
+    "https://bookmindai-tawny.vercel.app",
+    "https://bookmindai-vishesh-guptas-projects.vercel.app",
+    "https://bookmindai-git-main-vishesh-guptas-projects.vercel.app/"
    
 ]
 
