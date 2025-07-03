@@ -8,6 +8,7 @@ import uvicorn
 from typing import List, Optional
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from rapidfuzz import fuzz
 # Create FastAPI app
 app = FastAPI(title="Book Recommendation System", description="API for book recommendations using collaborative filtering")
 
@@ -143,10 +144,20 @@ async def health_check():
     }
 
 @app.get("/books", response_model=List[str])
-async def get_all_books():
-    """Get a list of all available books"""
+async def get_all_books(query: Optional[str] = None):
+    """Get a list of all available books, optionally filtered by a search query"""
     if not model_loaded:
         raise HTTPException(status_code=503, detail="Book recommendation service is currently unavailable. Please try again later.")
+    
+    if query:
+        # Filter book names using fuzzy matching
+        # You can adjust the threshold (e.g., 70) based on desired strictness
+        suggestions = [
+            book for book in book_names 
+            if fuzz.partial_ratio(query.lower(), book.lower()) > 70
+        ]
+        # Limit to top 10 suggestions for performance and UI
+        return suggestions[:10]
     return list(book_names)
 
 @app.get("/recommend/{book_name}", response_model=RecommendationResponse)

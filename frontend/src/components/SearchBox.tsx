@@ -19,19 +19,16 @@ const SearchBox: React.FC<{ onBookSelect: (book: Book) => void }> = ({ onBookSel
   const fetchSuggestions = async (q: string) => {
     setLoading(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books?query=${encodeURIComponent(q)}`)
       if (!res.ok) {
         throw new Error(`API request failed with status ${res.status}`)
       }
 
       const bookList = await res.json()
 
-      const filteredBooks = bookList
-        .filter((bookTitle: string) => bookTitle.toLowerCase().includes(q.toLowerCase()))
-        .slice(0, 8)
-        .map((title: string) => ({ title }))
+      const mappedBooks = bookList.map((title: string) => ({ title }))
 
-      setSuggestions(filteredBooks)
+      setSuggestions(mappedBooks)
     } catch (e) {
       console.error("Error fetching book suggestions:", e)
       setSuggestions([])
@@ -45,8 +42,11 @@ const SearchBox: React.FC<{ onBookSelect: (book: Book) => void }> = ({ onBookSel
     setShowDropdown(true)
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
     timeoutRef.current = setTimeout(() => {
-      if (val.length > 1) fetchSuggestions(val)
-      else setSuggestions([])
+      if (val.length > 1) {
+        fetchSuggestions(val)
+      } else {
+        setSuggestions([])
+      }
     }, 300)
   }
 
