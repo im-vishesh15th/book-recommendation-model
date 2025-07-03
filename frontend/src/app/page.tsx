@@ -1,7 +1,7 @@
 "use client"
 import SearchBox from "../components/SearchBox"
 import { useState } from "react"
-import { BookOpen, Sparkles, TrendingUp, Users, Star, Calendar, Tag ,CircleUserRound ,Building2} from "lucide-react"
+import { BookOpen, Sparkles, TrendingUp, Users, Star, Calendar ,CircleUserRound ,Building2} from "lucide-react"
 
 interface Book {
   title: string
