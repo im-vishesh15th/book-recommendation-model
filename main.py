@@ -66,7 +66,7 @@ class RecommendationResponse(BaseModel):
 def fetch_book_details(book_title):
     try:
         book_data = final_rating[final_rating['title'] == book_title].iloc[0]
-        print("YOOOOOOO"+str(book_data))
+
         return {
             "title": book_title,
             "image_url": book_data['image_url'],
@@ -97,12 +97,12 @@ def recommend_books(book_name, num_recommendations=5):
             book_pivot.iloc[book_id, :].values.reshape(1, -1), 
             n_neighbors=num_recommendations+1  # +1 because the book itself will be included
         )
-        print(suggestion)
+       
         
         # Get the recommended book titles
         recommended_books = []
-        similarities = 1 - distance.flatten()  # Convert cosine distance to similarity
-        # Normalize similarities (excluding the input book itself)
+        similarities = 1 - distance.flatten() 
+       
         normalized_similarities = similarities[1:] / similarities[1:].sum()
        
         for i in range(1, len(suggestion[0])):
@@ -116,7 +116,7 @@ def recommend_books(book_name, num_recommendations=5):
         
             recommended_books.append(book_details)
         
-        # Get the searched book's details
+      
         searched_book_details = fetch_book_details(book_name)
         
         return {
