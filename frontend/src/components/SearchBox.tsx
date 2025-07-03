@@ -19,7 +19,7 @@ const SearchBox: React.FC<{ onBookSelect: (book: Book) => void }> = ({ onBookSel
   const fetchSuggestions = async (q: string) => {
     setLoading(true)
     try {
-      const res = await fetch(`http://${process.env.NEXT_PUBLIC_API_URL}/books`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books`)
       if (!res.ok) {
         throw new Error(`API request failed with status ${res.status}`)
       }

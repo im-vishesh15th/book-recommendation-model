@@ -1,7 +1,7 @@
 "use client"
 import SearchBox from "../components/SearchBox"
 import { useState } from "react"
-import { BookOpen, Sparkles, TrendingUp, Users, Star, Calendar, Tag } from "lucide-react"
+import { BookOpen, Sparkles, TrendingUp, Users, Star, Calendar, Tag ,CircleUserRound ,Building2} from "lucide-react"
 
 interface Book {
   title: string
@@ -13,7 +13,8 @@ interface BookInfo {
   author:string,
   year: number,
   rating:number,
-  confidence:number
+  confidence:number,
+  publisher:string
 }
 
 interface RecommendationResponse {
@@ -170,12 +171,16 @@ export default function Home() {
 
                           <div className="flex flex-wrap gap-2">
                             <span className="inline-flex items-center gap-1 bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full text-xs font-medium">
-                              <Tag className="w-3 h-3" />
+                              <CircleUserRound className="w-3 h-3" />
                               {book.author}
                             </span>
                             <span className="inline-flex items-center gap-1 bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full text-xs font-medium">
                               <Calendar className="w-3 h-3" />
                               {book.year}
+                            </span>
+                            <span className="inline-flex items-center gap-1 bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full text-xs font-medium">
+                              <Building2 className="w-3 h-3" />
+                              {book.publisher}
                             </span>
                           </div>
 
