@@ -156,12 +156,7 @@ To also remove the virtual environment:
 ```
 
 
-```bash
-Author: Bappy Ahmed
-Data Scientist
-Email: entbappy73@gmail.com
-
-```
 
 
-# Book-Recommendation-System-using-ML
+
+
