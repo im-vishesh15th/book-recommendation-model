@@ -25,13 +25,16 @@ const SearchBox: React.FC<{ onBookSelect: (book: Book) => void }> = ({ onBookSel
       }
 
       const bookList = await res.json()
-
+      console.log("API response:", bookList)
       const mappedBooks = bookList.map((title: string) => ({ title }))
 
       setSuggestions(mappedBooks)
+      setFocused(true)
+     // console.log("Fetched suggestions:", mappedBooks)
     } catch (e) {
       console.error("Error fetching book suggestions:", e)
       setSuggestions([])
+      setFocused(false)
     }
     setLoading(false)
   }
@@ -113,7 +116,7 @@ const SearchBox: React.FC<{ onBookSelect: (book: Book) => void }> = ({ onBookSel
 
       {/* Suggestions Dropdown */}
       {showDropdown && suggestions.length > 0 && (
-        <div className="absolute left-0 right-0 mt-3 glass-effect rounded-xl border border-slate-700/50 shadow-2xl z-50 animate-slide-in overflow-hidden overflow-y-scroll ">
+        <div className="absolute left-0 right-0 mt-3 glass-effect rounded-xl border border-slate-700/50 shadow-2xl z-50 animate-slide-in overflow-hidden overflow-y-scroll max-h-[60vh]">
           <div className="p-2">
             {suggestions.map((book, idx) => (
               <div
